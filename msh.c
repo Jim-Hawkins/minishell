@@ -101,12 +101,37 @@ int main(int argc, char* argv[])
 
               /************************ STUDENTS CODE ********************************/
 	      if (command_counter > 0) {
-                if (command_counter > MAX_COMMANDS)
+                if (command_counter > MAX_COMMANDS){
                       printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
-                else {
+                }
+                /********************************************************************/
+                else if (command_counter == 1){
             	   // Print command
 		   print_command(argvv, filev, in_background);
+		   int son_id = fork();
+		   // Son's code
+		   if (son_id == 0){
+		   	printf("hello, %s\n", **argvv);
+		   	execvp(*argvv[0], argvv[0]);
+		   	//perror("An error occured while executing the order");
+		   	//exit(-1);
+		   }
+		   // Father's code
+		   else {
+		   	if (in_background){
+		   		while(son_id != wait(&status));
+		   	}
+		   	else {
+		   		wait(NULL);
+		   	}
+		   }
+		}
+		else {
+		   for(int i = 0; i < command_counter; i++){
+		   	printf("%d\n", command_counter);
+		   }
                 }
+                /******************************************/
               }
         }
 	return 0;
