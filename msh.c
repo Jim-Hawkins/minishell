@@ -110,21 +110,27 @@ int main(int argc, char* argv[])
 		   print_command(argvv, filev, in_background);
 		   int son_id = fork();
 		   // Son's code
-		   if (son_id == 0){
-		   	printf("hello, %s\n", **argvv);
-		   	execvp(*argvv[0], argvv[0]);
-		   	//perror("An error occured while executing the order");
-		   	//exit(-1);
-		   }
-		   // Father's code
-		   else {
-		   	if (in_background){
-		   		while(son_id != wait(&status));
-		   	}
-		   	else {
-		   		wait(NULL);
-		   	}
-		   }
+		   switch(son_id){
+		   	case -1: // error
+		   		perror("Error creating the new process");
+		   		return -1;
+			case 0:  // son
+			   	printf("hello, %s\n", **argvv);
+			   	if(execvp(*argvv[0], argvv[0]) == -1){
+			   		perror("An error occured while executing the order");
+			   		return -1;
+			   	}
+			   	break;
+			
+			   // Father's code
+			default:
+			   	if (in_background == 0) {
+			   		while(wait(&status) != son_id);
+			   		if(status != 0){
+			   			perror("The process returned an error");
+			   		}
+			   	}
+			}
 		}
 		else {
 		   for(int i = 0; i < command_counter; i++){
