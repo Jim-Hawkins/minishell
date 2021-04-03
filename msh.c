@@ -64,6 +64,8 @@ int main(int argc, char* argv[])
     int executed_cmd_lines = -1;
     char *cmd_line = NULL;
     char *cmd_lines[10];
+    int p[2];
+
 
     if (!isatty(STDIN_FILENO)) {
         cmd_line = (char*)malloc(100);
@@ -123,10 +125,10 @@ int main(int argc, char* argv[])
 			case 0:  // son
 			   	printf("hello, %s\n", **argvv);
 
-			   	if(execvp(argvv[0][0],argvv[0]) == -1){
-			   		perror("An error occured while executing the order");
-			   		return -1;
-			   	}
+			   	execvp(argvv[0][0],argvv[0]);
+			   	perror("An error occured while executing the order");
+			   	return -1;
+			   	
 			   	break;
 			
 			   // Father's code
@@ -141,10 +143,50 @@ int main(int argc, char* argv[])
 		else {
 		   for(int i = 0; i < command_counter; i++){
 		   	printf("%d\n", command_counter);
+			int ret;
+			int p10;	
+			pid_t pid;
+			if (i < (command_counter-1)){
+				ret = pipe(p);
+				if(ret<0){
+					perror("pipe Error:\t");
+					exit(-1);			
+				}
+			}
+			pid = fork();
+			switch(pid){
+				case -1://error creation
+					perror("FORK ERROR:\t");
+					exit(-1);	
+				case 0:
+					if(i!=0){//entrada
+						close(0); dup(p10);
+						close(p10);				
+					}
+					if(i!=(command_counter-1)){ //salida
+						close(1);dup(p[1]);
+						close(p[1]);close(p[0]);			
+					}
+
+					execvp(argvv[i][0],argvv[i]);
+			   		perror("An error occured while executing the order");
+			   		return -1;
+			   			
+				default:
+					if(i!=(command_counter-1)){//no es salida
+						p10=p[0]; close(p[1]);								
+					}
+					else{//final
+						close(p[0]);		
+					}
+	
+			}
+			while(pid!=wait(&status));
 		   }
                 }
                 /******************************************/
               }
         }
+	
 	return 0;
 }

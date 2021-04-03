@@ -1,0 +1,2 @@
+EXPORT LD_LIBRARY_PATH=/home/usr/carlosch/Desktop/pract2/minishell:$LD_LIBRARY_PATH
+
