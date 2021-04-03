@@ -39,8 +39,12 @@ void siginthandler(int param)
  * @param num_command
  * @return
  */
+
+
+
 void getCompleteCommand(char*** argvv, int num_command) {
-    //reset first
+    //reset first	
+    printf("Estamos dentro de la funcion");
     for(int j = 0; j < 8; j++)
         argv_execvp[j] = NULL;
 
@@ -118,8 +122,8 @@ int main(int argc, char* argv[])
 		   		exit(-1);
 			case 0:  // son
 			   	printf("hello, %s\n", **argvv);
-				getCompleteCommand(argvv,command_counter);
-			   	if(execvp(argv_execvp[0],argv_execvp) == -1){
+
+			   	if(execvp(argvv[0][0],argvv[0]) == -1){
 			   		perror("An error occured while executing the order");
 			   		return -1;
 			   	}
