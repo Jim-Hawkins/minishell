@@ -39,9 +39,6 @@ void siginthandler(int param)
  * @param num_command
  * @return
  */
-
-
-
 void getCompleteCommand(char*** argvv, int num_command) {
     //reset first	
     printf("Estamos dentro de la funcion");
@@ -64,8 +61,8 @@ int main(int argc, char* argv[])
     int executed_cmd_lines = -1;
     char *cmd_line = NULL;
     char *cmd_lines[10];
-    int p[2];
-
+    int p[2];							//integer-type array to create pipes
+    int last_fid;						//saves the edge of the current pipe so the next process can chain to it
 
     if (!isatty(STDIN_FILENO)) {
         cmd_line = (char*)malloc(100);
@@ -87,10 +84,11 @@ int main(int argc, char* argv[])
 
 	while (1) 
 	{
-		int status = 0;
-	        int command_counter = 0;
-		int in_background = 0;
-		signal(SIGINT, siginthandler);
+		int status = 0;				//it will inform about the return of a child process
+	        int command_counter = 0;			//indicates the number of commands introduced
+		int in_background = 0;				//indicates whether the process has to run in background mode
+		pid_t son_pid = 0;				//identifier of a child process
+		signal(SIGINT, siginthandler);		//handler for Ctrl+C interruption
 
 		// Prompt 
 		write(STDERR_FILENO, "MSH>>", strlen("MSH>>"));
@@ -110,15 +108,15 @@ int main(int argc, char* argv[])
               /************************ STUDENTS CODE ********************************/
 	      if (command_counter > 0) {
                 if (command_counter > MAX_COMMANDS){
-                      printf("Error: Numero máximo de comandos es %d \n", MAX_COMMANDS);
-                }
-                /********************************************************************/
+                      printf("Error: Max number of commands is %d\n.", MAX_COMMANDS);
+                } 
+                //////////////////////////////////////////
                 else if (command_counter == 1){
             	   // Print command
-		   print_command(argvv, filev, in_background);
-		   pid_t son_id = fork();
+		   //print_command(argvv, filev, in_background);
+		   son_pid = fork();
 		   // Son's code
-		   switch(son_id){
+		   switch(son_pid){
 		   	case -1: // error
 		   		perror("Error creating the new process");
 		   		exit(-1);
@@ -133,59 +131,66 @@ int main(int argc, char* argv[])
 			
 			   // Father's code
 			default:
-			   	if (in_background == 0) {
-			   		while(wait(&status) != son_id);
-			   		
-			   		
-			   	}
+			   if(!in_background){							//we will wait only if in_backgroun is false (-> foreground)
+				while(son_pid != wait(&status));
+				if(status < 0){
+					perror("Child process terminated with errors:\t");	//display a message to inform the user if the son has had problems
+				}
+			   printf("%d\n", son_pid);
+			  }
 			}
 		}
-		else {
-		   for(int i = 0; i < command_counter; i++){
-		   	printf("%d\n", command_counter);
-			int ret;
-			int p10;	
-			pid_t pid;
-			if (i < (command_counter-1)){
-				ret = pipe(p);
-				if(ret<0){
+                ///////////////////////////
+                else {									//using a for loop allows to execute any number of commands from 1 to MAX_COMMANDS
+		   for(int i = 0; i < command_counter; i++){				//  by making the father process a 'monitor' in the task of chaining sons through pipes
+			if (i < (command_counter-1)){					//if it isn't the last process, create a pipe (there must be 'command_counter - 1' pipes)
+				if(pipe(p) < 0){
 					perror("pipe Error:\t");
 					exit(-1);			
 				}
 			}
-			pid = fork();
-			switch(pid){
-				case -1://error creation
+			son_pid = fork();						//both father and son processes will preserve a copy of the pipe created in the previous step
+			switch(son_pid){
+				case -1:	//error creating a child process
 					perror("FORK ERROR:\t");
 					exit(-1);	
-				case 0:
-					if(i!=0){//entrada
-						close(0); dup(p10);
-						close(p10);				
+				case 0:	//SON'S CODE
+					//printf("args: %s, %s\n", argvv[i][0], *argvv[i]);
+					if(i != 0){					//every child (except the first one) must close standard input (the keyboard)
+						close(STDIN_FILENO); dup(last_fid);	//  and duplicate the output descriptor of the previous pipe
+						close(last_fid);			//once created, we can close the duplicate descriptor
 					}
-					if(i!=(command_counter-1)){ //salida
-						close(1);dup(p[1]);
-						close(p[1]);close(p[0]);			
+					if(i != (command_counter - 1)){		//every child (except the last one) must close standard output (the screen)
+						close(STDOUT_FILENO); dup(p[1]);	//   and duplicate the input descriptor of the current pipe
+						close(p[1]); close(p[0]);		//once created, we can close the duplicate descriptors of the pipe
 					}
 
-					execvp(argvv[i][0],argvv[i]);
-			   		perror("An error occured while executing the order");
-			   		return -1;
+					execvp(argvv[i][0], argvv[i]);		//time to execute the #i command
+			   		perror("An error occured while executing the order"); //this two lines will only be run if execvp fails
+			   		exit(-1);
 			   			
-				default:
-					if(i!=(command_counter-1)){//no es salida
-						p10=p[0]; close(p[1]);								
+				default:	//FATHER'S CODE
+					if(i != (command_counter - 1)){		//in every iteration, except the last one, the father process saves the output of
+						last_fid = p[0]; 			//  the current pipe so it can be used as input by the next child (p[0] will be overwritten)
+						close(p[1]);				//also, the father closes the descriptor p[1] (pipe's input), as it is no longer needed
+											//  (even tough p[0] has a copy in last_fid, closing one would close both, as they are copies
+											//  of the same descriptor)
 					}
-					else{//final
-						close(p[0]);		
+					else{						//in the last iteration, we can finally close the remaining descriptor
+						close(last_fid);			//  (it would make no difference closing p[0] or last_fid, but this way is clearer)
 					}
 	
 			}
-			while(pid!=wait(&status));
 		   }
-                }
-                /******************************************/
+		   if(!in_background){							//we will wait only if in_backgroun is false (-> foreground)
+			while(son_pid != wait(&status));
+			if(status < 0){
+				perror("Child process terminated with errors:\t");	//display a message to inform the user if the son has had problems
+			}
+		   printf("%d\n", son_pid);
+                  }
               }
+        }
         }
 	
 	return 0;
