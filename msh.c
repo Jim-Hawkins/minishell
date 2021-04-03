@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 			case 0:  // son
 			   	printf("hello, %s\n", **argvv);
 				getCompleteCommand(argvv,command_counter);
-			   	if(execvp(argv_execvp[0] == -1){
+			   	if(execvp(argv_execvp[0],argv_execvp) == -1){
 			   		perror("An error occured while executing the order");
 			   		return -1;
 			   	}
@@ -130,7 +130,7 @@ int main(int argc, char* argv[])
 			   	if (in_background == 0) {
 			   		while(wait(&status) != son_id);
 			   		
-			   		}
+			   		
 			   	}
 			}
 		}
