@@ -14,6 +14,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+
+
 #define MAX_COMMANDS 8
 
 
@@ -108,15 +110,16 @@ int main(int argc, char* argv[])
                 else if (command_counter == 1){
             	   // Print command
 		   print_command(argvv, filev, in_background);
-		   int son_id = fork();
+		   pid_t son_id = fork();
 		   // Son's code
 		   switch(son_id){
 		   	case -1: // error
 		   		perror("Error creating the new process");
-		   		return -1;
+		   		exit(-1);
 			case 0:  // son
 			   	printf("hello, %s\n", **argvv);
-			   	if(execvp(*argvv[0], argvv[0]) == -1){
+				getCompleteCommand(argvv,command_counter);
+			   	if(execvp(argv_execvp[0] == -1){
 			   		perror("An error occured while executing the order");
 			   		return -1;
 			   	}
@@ -126,8 +129,7 @@ int main(int argc, char* argv[])
 			default:
 			   	if (in_background == 0) {
 			   		while(wait(&status) != son_id);
-			   		if(status != 0){
-			   			perror("The process returned an error");
+			   		
 			   		}
 			   	}
 			}
