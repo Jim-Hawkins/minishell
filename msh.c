@@ -24,6 +24,8 @@ char filev[3][64];
 
 //to store the execvp second parameter
 char *argv_execvp[8];
+//environment variable to store the accumulated sums
+int Acc = 0;
 
 void siginthandler(int param)
 {
@@ -48,6 +50,25 @@ void getCompleteCommand(char*** argvv, int num_command) {
     int i = 0;
     for ( i = 0; argvv[num_command][i] != NULL; i++)
         argv_execvp[i] = argvv[num_command][i];
+}
+
+
+char mycalc(char* command){
+	int op1 = atoi(command[1]);
+	int op2 = atoi(command[3]);
+	int sum;
+	char res[128];
+	//printf("%s, %s, %s\n", command[1], command[2], command[3]);
+	if(strcmp(command[2], "add")){
+		//sum = op1 + op2;
+		sum = op1 + op2;
+		Acc = Acc + sum;
+		sprintf(res, "[OK] %d + %d = %d", op1, op2, sum);
+		return *res;
+		
+	} /*else if(strcmp(command[2], "mod")){
+		res
+	}*/
 }
 
 
@@ -112,6 +133,17 @@ int main(int argc, char* argv[])
                 } 
                 //////////////////////////////////////////
                 else if (command_counter == 1){
+                   if(strcmp(argvv[0][0], "mycalc")){
+                   	char res[128];
+                   	//strcpy(res, mycalc(argvv[0] = ["mycalc", "5", "add", "-3"]));
+                   	strcpy(res, mycalc(argvv[0]));
+                   	pritnf("%s", res);
+                   }
+                   if(strcmp(argvv[0][0], "mycp")){
+                   	mycp(argvv[0]);
+                   }
+                
+                   //printf("command_counter %d\n", command_counter);
             	   // Print command
 		   //print_command(argvv, filev, in_background);
 		   son_pid = fork();
@@ -121,13 +153,9 @@ int main(int argc, char* argv[])
 		   		perror("Error creating the new process");
 		   		exit(-1);
 			case 0:  // son
-			   	printf("hello, %s\n", **argvv);
-
 			   	execvp(argvv[0][0],argvv[0]);
 			   	perror("An error occured while executing the order");
 			   	return -1;
-			   	
-			   	break;
 			
 			   // Father's code
 			default:
@@ -142,6 +170,7 @@ int main(int argc, char* argv[])
 		}
                 ///////////////////////////
                 else {									//using a for loop allows to execute any number of commands from 1 to MAX_COMMANDS
+                   //printf("command_counter %d\n", command_counter);
 		   for(int i = 0; i < command_counter; i++){				//  by making the father process a 'monitor' in the task of chaining sons through pipes
 			if (i < (command_counter-1)){					//if it isn't the last process, create a pipe (there must be 'command_counter - 1' pipes)
 				if(pipe(p) < 0){
