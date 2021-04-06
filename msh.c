@@ -18,6 +18,9 @@
 
 #define MAX_COMMANDS 8
 
+//creamos var global para la funcion mycalc y mycp con dimension 128
+char res[128];
+
 
 // ficheros por si hay redirección
 char filev[3][64];
@@ -52,23 +55,26 @@ void getCompleteCommand(char*** argvv, int num_command) {
         argv_execvp[i] = argvv[num_command][i];
 }
 
+void mycalc(char *command[],char *res){
 
-char mycalc(char* command){
-	int op1 = atoi(command[1]);
-	int op2 = atoi(command[3]);
-	int sum;
-	char res[128];
-	//printf("%s, %s, %s\n", command[1], command[2], command[3]);
-	if(strcmp(command[2], "add")){
-		//sum = op1 + op2;
-		sum = op1 + op2;
-		Acc = Acc + sum;
-		sprintf(res, "[OK] %d + %d = %d", op1, op2, sum);
-		return *res;
-		
-	} /*else if(strcmp(command[2], "mod")){
-		res
-	}*/
+	if(3>5){
+		sprintf(res, "La estructura del comando es <operando1><add/mod><operando2>");
+	}else{
+		int op1 = atoi(command[1]);
+		int op2 = atoi(command[3]);
+		int sum,mod,rest;
+		if(strcmp(command[2], "add")==0){
+			sum = op1 + op2;
+			Acc = Acc + sum;
+			sprintf(res, "[OK] %d + %d = %d; ACC = %d", op1, op2, sum,Acc);
+
+			
+		} else if(strcmp(command[2], "mod")==0){
+			mod = op1 / op2;
+			rest = op1-op2*mod;
+			sprintf(res, "[OK] %d %% %d = %d * %d + %d", op1, op2, op2,mod,rest);
+		}
+	}
 }
 
 
@@ -133,39 +139,42 @@ int main(int argc, char* argv[])
                 } 
                 //////////////////////////////////////////
                 else if (command_counter == 1){
-                   if(strcmp(argvv[0][0], "mycalc")){
-                   	char res[128];
-                   	//strcpy(res, mycalc(argvv[0] = ["mycalc", "5", "add", "-3"]));
-                   	strcpy(res, mycalc(argvv[0]));
-                   	pritnf("%s", res);
+		   
+                   if(strcmp(argvv[0][0], "mycalc")==0){
+
+                   	mycalc(argvv[0],res);
+			printf("%s\n",res);
+
                    }
-                   if(strcmp(argvv[0][0], "mycp")){
+                   /*if(strcmp(argvv[0][0], "mycp")){
                    	mycp(argvv[0]);
-                   }
+                   }*/
                 
                    //printf("command_counter %d\n", command_counter);
             	   // Print command
 		   //print_command(argvv, filev, in_background);
-		   son_pid = fork();
-		   // Son's code
-		   switch(son_pid){
-		   	case -1: // error
-		   		perror("Error creating the new process");
-		   		exit(-1);
-			case 0:  // son
-			   	execvp(argvv[0][0],argvv[0]);
-			   	perror("An error occured while executing the order");
-			   	return -1;
-			
-			   // Father's code
-			default:
-			   if(!in_background){							//we will wait only if in_backgroun is false (-> foreground)
-				while(son_pid != wait(&status));
-				if(status < 0){
-					perror("Child process terminated with errors:\t");	//display a message to inform the user if the son has had problems
+		   else{
+		 	  son_pid = fork();
+		  	 // Son's code
+		 	  switch(son_pid){
+		   		case -1: // error
+		   			perror("Error creating the new process");
+		   			exit(-1);
+				case 0:  // son
+			   		execvp(argvv[0][0],argvv[0]);
+			   		perror("An error occured while executing the order");
+				   	return -1;
+				
+				   // Father's code
+				default:
+				   if(!in_background){							//we will wait only if in_backgroun is false (-> foreground)
+					while(son_pid != wait(&status));
+					if(status < 0){
+						perror("Child process terminated with errors:\t");	//display a message to inform the user if the son has had problems
+					}
+				   printf("%d\n", son_pid);
+				  }
 				}
-			   printf("%d\n", son_pid);
-			  }
 			}
 		}
                 ///////////////////////////
@@ -185,6 +194,34 @@ int main(int argc, char* argv[])
 					exit(-1);	
 				case 0:	//SON'S CODE
 					//printf("args: %s, %s\n", argvv[i][0], *argvv[i]);
+					if(i==0 && filev[0]!=0){
+						close(0);
+						int file;
+						if((file=open(filev[0],O_RDONLY))<0){
+							perror("open Error:\t");
+							exit(-1);
+						}
+											
+					}
+					else if(i==(command_counter-1) && filev[1]!=0){
+						close(1);
+						int file;
+						
+						if((file=open(filev[0],O_CREAT|O_WRONLY,0666))<0){
+							perror("open Error:\t");
+							exit(-1);
+						}
+											
+					}
+					else if(filev[2]!=0){
+						close(2);
+						int file;
+						if((file=open(filev[2],O_CREAT|O_WRONLY,0666))<0){
+							perror("open Error:\t");
+							exit(-1);
+						}
+											
+					}
 					if(i != 0){					//every child (except the first one) must close standard input (the keyboard)
 						close(STDIN_FILENO); dup(last_fid);	//  and duplicate the output descriptor of the previous pipe
 						close(last_fid);			//once created, we can close the duplicate descriptor
