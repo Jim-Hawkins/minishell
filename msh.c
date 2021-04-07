@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <ctype.h>
 
 
 
@@ -56,10 +57,34 @@ void getCompleteCommand(char*** argvv, int num_command) {
 }
 
 void mycalc(char *command[],char *res){
-
-	if(3>5){
+	
+	if((sizeof(*command)/2)!=4){
+		printf("prueba");
 		sprintf(res, "La estructura del comando es <operando1><add/mod><operando2>");
 	}else{
+		for(int i=0;i<((sizeof(*command[1])));i++){
+
+			if(isdigit(command[1][i])==0){
+
+				//printf("entra en el 1");
+				sprintf(res, "La estructura del comando es <operando1><add/mod><operando2>");
+				return;
+			}
+		}
+		if(strcmp(command[2],"add")!=0 && strcmp(command[2],"mod")!=0){
+			//printf("entra en el 3");
+			sprintf(res, "La estructura del comando es <operando1><add/mod><operando2>");
+			return;
+		}
+		for(int i=0;i<(sizeof(*command[3]));i++){
+			if(isdigit(command[3][i])==0){
+				//printf("entra en el 2");
+				sprintf(res, "La estructura del comando es <operando1><add/mod><operando2>");
+				return;
+			}
+		}
+		
+				
 		int op1 = atoi(command[1]);
 		int op2 = atoi(command[3]);
 		int sum,mod,rest;
@@ -194,7 +219,8 @@ int main(int argc, char* argv[])
 					exit(-1);	
 				case 0:	//SON'S CODE
 					//printf("args: %s, %s\n", argvv[i][0], *argvv[i]);
-					if(i==0 && filev[0]!=0){
+
+					if(i==0 && strcmp(filev[0],"0")!=0){
 						close(0);
 						int file;
 						if((file=open(filev[0],O_RDONLY))<0){
@@ -203,7 +229,7 @@ int main(int argc, char* argv[])
 						}
 											
 					}
-					else if(i==(command_counter-1) && filev[1]!=0){
+					else if(i==(command_counter-1) && strcmp(filev[1],"0")!=0){
 						close(1);
 						int file;
 						
@@ -213,7 +239,7 @@ int main(int argc, char* argv[])
 						}
 											
 					}
-					else if(filev[2]!=0){
+					else if(strcmp(filev[2],"0")!=0){
 						close(2);
 						int file;
 						if((file=open(filev[2],O_CREAT|O_WRONLY,0666))<0){
@@ -226,7 +252,8 @@ int main(int argc, char* argv[])
 						close(STDIN_FILENO); dup(last_fid);	//  and duplicate the output descriptor of the previous pipe
 						close(last_fid);			//once created, we can close the duplicate descriptor
 					}
-					if(i != (command_counter - 1)){		//every child (except the last one) must close standard output (the screen)
+					if(i != (command_counter - 1)){	
+							//every child (except the last one) must close standard output (the screen)
 						close(STDOUT_FILENO); dup(p[1]);	//   and duplicate the input descriptor of the current pipe
 						close(p[1]); close(p[0]);		//once created, we can close the duplicate descriptors of the pipe
 					}
