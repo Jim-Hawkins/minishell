@@ -59,7 +59,7 @@ void getCompleteCommand(char*** argvv, int num_command) {
 
 void mycalc(char *command[],char *res){
 	
-	if((sizeof(*command)/2)!=4){
+	if((sizeof(*command))!=32){
 		printf("%ld\n",sizeof(*command));
 		sprintf(res, "[ERROR] La estructura del comando es <operando1><add/mod><operando2>");
 	}else{
@@ -104,7 +104,7 @@ void mycalc(char *command[],char *res){
 }
 
 void mycp(char *command[],char *res){
-	if(sizeof(*command)!=3){
+	if(sizeof(*command)!=24){
 		printf("%ld\n",sizeof(*command));
 		sprintf(res,"[ERROR] La estructura del comando es mycp<fichero origen><fichero destino>");
 	}else{
@@ -272,7 +272,7 @@ int main(int argc, char* argv[])
 						close(1);
 						int file;
 						
-						if((file=open(filev[0],O_CREAT|O_WRONLY,0666))<0){
+						if((file=open(filev[1],O_CREAT|O_WRONLY,0666))<0){
 							perror("open Error:\t");
 							exit(-1);
 						}
