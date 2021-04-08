@@ -57,10 +57,9 @@ void getCompleteCommand(char*** argvv, int num_command) {
         argv_execvp[i] = argvv[num_command][i];
 }
 
-void mycalc(char *command[],char *res){
+void mycalc(char *command[],char *res,int num_a){
 	
-	if((sizeof(*command))!=32){
-		printf("%ld\n",sizeof(*command));
+	if(num_a != 4){
 		sprintf(res, "[ERROR] La estructura del comando es <operando1><add/mod><operando2>");
 	}else{
 		for(int i=0;i<((sizeof(*command[1])));i++){
@@ -103,9 +102,8 @@ void mycalc(char *command[],char *res){
 	}
 }
 
-void mycp(char *command[],char *res){
-	if(sizeof(*command)!=24){
-		printf("%ld\n",sizeof(*command));
+void mycp(char *command[],char *res, int num_a){
+	if(num_a != 3){
 		sprintf(res,"[ERROR] La estructura del comando es mycp<fichero origen><fichero destino>");
 	}else{
 		int des1, des2,nread,nwrite;
@@ -147,8 +145,9 @@ int main(int argc, char* argv[])
     char *cmd_line = NULL;
     char *cmd_lines[10];
     int p[2];							//integer-type array to create pipes
-    int last_fid;						//saves the edge of the current pipe so the next process can chain to it
-
+    int last_fid;
+						//saves the edge of the current pipe so the next process can chain to it
+    int num_arg;
     if (!isatty(STDIN_FILENO)) {
         cmd_line = (char*)malloc(100);
         while (scanf(" %[^\n]", cmd_line) != EOF){
@@ -199,14 +198,21 @@ int main(int argc, char* argv[])
                 else if (command_counter == 1){
 		   
                    if(strcmp(argvv[0][0], "mycalc")==0){
-
-                   	mycalc(argvv[0],res);
+			num_arg = 0;
+			for(int i = 0;argvv[0][i]!=NULL;i++){
+				num_arg++;			
+			}
+                   	mycalc(argvv[0],res,num_arg);
 			printf("%s\n",res);
 
                    }
-		   if(strcmp(argvv[0][0], "mycp")==0){
-
-                   	mycp(argvv[0],res);
+		   else if(strcmp(argvv[0][0], "mycp")==0){
+			num_arg = 0;
+			for(int i = 0;argvv[0][i]!=NULL;i++){
+				num_arg++;			
+			}			
+				
+                   	mycp(argvv[0],res,num_arg);
 			printf("%s\n",res);
 
                    }
