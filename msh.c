@@ -18,6 +18,7 @@
 
 
 #define MAX_COMMANDS 8
+#define BUFFER 512
 
 //creamos var global para la funcion mycalc y mycp con dimension 128
 char res[128];
@@ -59,27 +60,27 @@ void getCompleteCommand(char*** argvv, int num_command) {
 void mycalc(char *command[],char *res){
 	
 	if((sizeof(*command)/2)!=4){
-		printf("prueba");
-		sprintf(res, "La estructura del comando es <operando1><add/mod><operando2>");
+		printf("%ld\n",sizeof(*command));
+		sprintf(res, "[ERROR] La estructura del comando es <operando1><add/mod><operando2>");
 	}else{
 		for(int i=0;i<((sizeof(*command[1])));i++){
 
 			if(isdigit(command[1][i])==0){
 
 				//printf("entra en el 1");
-				sprintf(res, "La estructura del comando es <operando1><add/mod><operando2>");
+				sprintf(res, "[ERROR] La estructura del comando es <operando1><add/mod><operando2>");
 				return;
 			}
 		}
 		if(strcmp(command[2],"add")!=0 && strcmp(command[2],"mod")!=0){
 			//printf("entra en el 3");
-			sprintf(res, "La estructura del comando es <operando1><add/mod><operando2>");
+			sprintf(res, "[ERROR] La estructura del comando es <operando1><add/mod><operando2>");
 			return;
 		}
 		for(int i=0;i<(sizeof(*command[3]));i++){
 			if(isdigit(command[3][i])==0){
 				//printf("entra en el 2");
-				sprintf(res, "La estructura del comando es <operando1><add/mod><operando2>");
+				sprintf(res, "[ERROR] La estructura del comando es <operando1><add/mod><operando2>");
 				return;
 			}
 		}
@@ -102,6 +103,38 @@ void mycalc(char *command[],char *res){
 	}
 }
 
+void mycp(char *command[],char *res){
+	if(sizeof(*command)!=3){
+		printf("%ld\n",sizeof(*command));
+		sprintf(res,"[ERROR] La estructura del comando es mycp<fichero origen><fichero destino>");
+	}else{
+		int des1, des2,nread,nwrite;
+		char buffer[BUFFER];
+		if((des1 = open(command[1],O_RDONLY))<0){
+			perror("[ERROR] Error al abrir el fichero origen\n");
+			return;
+		}
+		if((des2 = open(command[2],O_WRONLY|O_CREAT,0666))<0){
+			perror("[ERROR] Error al abrir el fichero destino\n");
+			return;
+		}
+		while((nread=read(des1,buffer,BUFFER))>0){
+			nwrite=write(des2,buffer,nread);
+			if(nwrite<nread){
+				sprintf(res,"[ERROR] Error al escribir en el fichero destino");		
+			}
+		}
+		if(close(des1)<0){
+			perror("[ERROR] ERROR al cerrar el fichero origen");
+			return;
+		}
+		if(close(des2)<0){
+			perror("[ERROR] ERROR al cerrar el fichero origen");
+			return;
+		}
+		sprintf(res,"[OK] Copiado con exito el fichero<origen>a<destino>");
+	}
+}
 
 /**
  * Main sheell  Loop  
@@ -168,6 +201,12 @@ int main(int argc, char* argv[])
                    if(strcmp(argvv[0][0], "mycalc")==0){
 
                    	mycalc(argvv[0],res);
+			printf("%s\n",res);
+
+                   }
+		   if(strcmp(argvv[0][0], "mycp")==0){
+
+                   	mycp(argvv[0],res);
 			printf("%s\n",res);
 
                    }
