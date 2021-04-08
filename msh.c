@@ -30,7 +30,9 @@ char filev[3][64];
 //to store the execvp second parameter
 char *argv_execvp[8];
 //environment variable to store the accumulated sums
-int Acc = 0;
+
+
+
 
 void siginthandler(int param)
 {
@@ -58,7 +60,6 @@ void getCompleteCommand(char*** argvv, int num_command) {
 }
 
 void mycalc(char *command[],char *res,int num_a){
-	
 	if(num_a != 4){
 		sprintf(res, "[ERROR] La estructura del comando es <operando1><add/mod><operando2>");
 	}else{
@@ -88,11 +89,16 @@ void mycalc(char *command[],char *res,int num_a){
 		int op1 = atoi(command[1]);
 		int op2 = atoi(command[3]);
 		int sum,mod,rest;
+		char *ret = getenv("Acc");
+		int Acc = atoi(ret);
+		char num[128];
 		if(strcmp(command[2], "add")==0){
 			sum = op1 + op2;
 			Acc = Acc + sum;
 			sprintf(res, "[OK] %d + %d = %d; ACC = %d", op1, op2, sum,Acc);
-
+			sprintf(num,"%d",Acc);
+			setenv("Acc", num,1);
+			
 			
 		} else if(strcmp(command[2], "mod")==0){
 			mod = op1 / op2;
@@ -146,8 +152,12 @@ int main(int argc, char* argv[])
     char *cmd_lines[10];
     int p[2];							//integer-type array to create pipes
     int last_fid;
-						//saves the edge of the current pipe so the next process can chain to it
+				//saves the edge of the current pipe so the next process can chain to it
     int num_arg;
+    const char *nombre_var = "Acc";
+    const char *val_var = "0";
+    setenv(nombre_var,val_var,1);
+	
     if (!isatty(STDIN_FILENO)) {
         cmd_line = (char*)malloc(100);
         while (scanf(" %[^\n]", cmd_line) != EOF){
@@ -197,6 +207,8 @@ int main(int argc, char* argv[])
                 //////////////////////////////////////////
                 else if (command_counter == 1){
 		   
+
+
                    if(strcmp(argvv[0][0], "mycalc")==0){
 			num_arg = 0;
 			for(int i = 0;argvv[0][i]!=NULL;i++){
@@ -231,6 +243,35 @@ int main(int argc, char* argv[])
 		   			perror("Error creating the new process");
 		   			exit(-1);
 				case 0:  // son
+					if( strcmp(filev[0],"0")!=0){
+						close(0);
+						int file;
+						if((file=open(filev[0],O_RDONLY))<0){
+							perror("open Error:\t");
+							exit(-1);
+						}
+											
+					}
+					else if(strcmp(filev[1],"0")!=0){
+						close(1);
+						int file;
+								
+						if((file=open(filev[1],O_CREAT|O_WRONLY,0666))<0){
+							perror("open Error:\t");
+							exit(-1);
+							}
+														
+						}
+			
+					else if(strcmp(filev[2],"0")!=0){
+						close(2);
+						int file;
+						if((file=open(filev[2],O_CREAT|O_WRONLY,0666))<0){
+							perror("open Error:\t");
+							exit(-1);
+							}
+														
+					}
 			   		execvp(argvv[0][0],argvv[0]);
 			   		perror("An error occured while executing the order");
 				   	return -1;

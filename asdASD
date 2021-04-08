@@ -1,0 +1,4 @@
+Este fichero esta creado con la finalidad de probar que el comando de la terminal Mycp funciona correctamente
+en el siguiente fichero creado que sera test_d debera de estar todo este texto copia en el mismo,
+dicho fichero se crea en un principio totalmente vacio y una vez ejecutado el comando programado el shell MSH
+con el mycp debera aparecer este texto de prueba.
