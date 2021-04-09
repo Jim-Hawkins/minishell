@@ -64,14 +64,16 @@ void getCompleteCommand(char*** argvv, int num_command) {
  * @param num_args
  * @return
  */
-void mycalc(char *command[],char *res,int num_args){
+void mycalc(char *command[], char *res, int num_args){
 	//the 'command' parameter cannot have less or more than four strings (command = mycalc op1 add|mod op2)
 	if(num_args != 4){
-		sprintf(res, "[ERROR] La estructura del comando es mycalc <operando1><add/mod><operando2>");
+		sprintf(res, "[ERROR] La estructura del comando es mycalc <operando1><add/mod><operando2>\n");
+		write(STDOUT_FILENO, res, strlen(res)); return;
 	}else{
 		//if the number of strings in 'command' is correct, we have to check the operator
 		if(strcmp(command[2],"add") != 0 && strcmp(command[2],"mod") != 0){
-			sprintf(res, "[ERROR] La estructura del comando es mycalc <operando1><add/mod><operando2>"); return;
+			sprintf(res, "[ERROR] La estructura del comando es mycalc <operando1><add/mod><operando2>\n");
+			write(STDOUT_FILENO, res, strlen(res)); return;
 		}
 		//once checkings are done, convert to integer the operands and define variables for the results (sum, mod(ulus) and rem(ainder))
 		int op1 = atoi(command[1]);				//atoi() converts the initial portion of the string argument to int
@@ -83,15 +85,17 @@ void mycalc(char *command[],char *res,int num_args){
 		if(strcmp(command[2], "add") == 0){
 			sum = op1 + op2;
 			Acc = Acc + sum;
-			sprintf(res, "[OK] %d + %d = %d; Acc = %d", op1, op2, sum, Acc);
+			sprintf(res, "[OK] %d + %d = %d; Acc = %d\n", op1, op2, sum, Acc);
 			sprintf(num, "%d", Acc);
 			setenv("Acc", num, 1);
+			write(STDERR_FILENO, res, strlen(res)); return;
 			
 			
 		} else if(strcmp(command[2], "mod") == 0){
 			mod = op1 / op2;
 			rem = op1 - op2*mod;
-			sprintf(res, "[OK] %d %% %d = %d * %d + %d", op1, op2, op2, mod, rem);
+			sprintf(res, "[OK] %d %% %d = %d * %d + %d\n", op1, op2, op2, mod, rem);
+			write(STDERR_FILENO, res, strlen(res)); return;
 		}
 	}
 }
@@ -103,39 +107,47 @@ void mycalc(char *command[],char *res,int num_args){
  * @param num_args
  * @return
  */
-void mycp(char *command[],char *res, int num_args){
+void mycp(char *command[], char *res, int num_args){
 	//the 'command' parameter cannot have less or more than three strings (command = mycp file file2)
 	if(num_args != 3){
-		sprintf(res,"[ERROR] La estructura del comando es mycp <fichero origen><fichero destino>");
+		sprintf(res,"[ERROR] La estructura del comando es mycp <fichero origen><fichero destino>\n");
+		write(STDOUT_FILENO, res, strlen(res)); return;
 	}else{
 		//we create the necessary variables for the operation:
 		int des1, des2, nread, nwrite;		//file descriptors, bytes read and bytes written
 		char buffer[BUFFER];				//buffer for copying the content
 		if( (des1 = open(command[1], O_RDONLY)) < 0){
-			perror("[ERROR] Error al abrir el fichero origen\n"); return;
+			sprintf(res,"[ERROR] Error al abrir el fichero origen\n");
+			write(STDOUT_FILENO, res, strlen(res)); return;
 		}
 		if( (des2 = open(command[2], O_WRONLY|O_CREAT, 0666)) < 0){
-			perror("[ERROR] Error al abrir el fichero destino\n"); return;
+			sprintf(res,"[ERROR] Error al abrir el fichero destino\n");
+			write(STDOUT_FILENO, res, strlen(res)); return;
 		}
 		//main part of the function
 		while( (nread = read(des1, buffer, BUFFER)) > 0){	//read the file while there are characters left
 			nwrite = write(des2, buffer, nread);		//write the content of the buffer in the new file
-			if(nwrite < nread){				//if not all of the characters have been written, something went wrong
-				sprintf(res, "[ERROR] Error al escribir en el fichero destino");		
+			if(nwrite < nread){				//if not all of the characters are written, something went wrong
+				sprintf(res,"[ERROR] Error al escribir en el fichero origen\n");
+				write(STDOUT_FILENO, res, strlen(res)); return;		
 			}
 		}
 		if(close(des1) < 0){							      //if there is an error closing the first file
 			if(close(des2) < 0){						      //  try closing the second one
-				perror("[ERROR] Error al cerrar los ficheros"); return;     //if both had problems, return the corresponding error message
+				sprintf(res,"[ERROR] Error al cerrar los ficheros\n");      //if both had problems, return the corresponding error message
+				write(STDOUT_FILENO, res, strlen(res)); return;
 			} else{
-				perror("[ERROR] Error al cerrar el fichero origen"); return;//if only the first one had problems, warn the user
+				sprintf(res,"[ERROR] Error al cerrar el fichero origen\n"); //if only the first one had problems, warn the user
+				write(STDOUT_FILENO, res, strlen(res)); return;
 			}
 		}
-		if(close(des2) < 0){							      //if the first file was closed, but the second one has problems
-			perror("[ERROR] Error al cerrar el fichero destino"); return;       //warn the user
+		if(close(des2) < 0){   
+			sprintf(res,"[ERROR] Error al cerrar el fichero destino\n");	      //if the first file was closed, but the second one has problems
+			write(STDOUT_FILENO, res, strlen(res)); return;		      //warn the user
 		}
-		
-		sprintf(res,"[OK] Copiado con exito el fichero <origen> a <destino>");     //if everything went okay, inform the user with a success message
+
+		sprintf(res,"[OK] Copiado con exito el fichero %s a %s\n", command[1], command[2]);//if everything went okay, inform the user with a success message
+		write(STDOUT_FILENO, res, strlen(res)); return;
 	}
 }
 
@@ -202,23 +214,22 @@ int main(int argc, char* argv[])
                 if (command_counter > MAX_COMMANDS){
                       printf("Error: Max number of commands is %d\n.", MAX_COMMANDS);
                 } else if (command_counter == 1){				//if there is only one command it can be a call to mycalc or mycp, o a simple command
+                   //MYCALC
                    if(strcmp(argvv[0][0], "mycalc") == 0){			//if it is mycalc, check how many words are sent (e.g. mycalc 1 add 2 -> num_arg = 4), this
 			num_arg = 0;						//  parameter allows the function to return an error message if the number is not the expected
 			for(int i = 0; argvv[0][i] != NULL; i++){
 				num_arg++;			
 			}
-                   	mycalc(argvv[0], res, num_arg);			//the result will be copied in global 'res' and the printed out
-			printf("%s\n",res);
-
-                   } else if(strcmp(argvv[0][0], "mycp")==0){		//if it is mycp, check how many words are sent (e.g. mycp file1 file2 -> num_arg = 3)
+                   	mycalc(argvv[0], res, num_arg);			//the result will be printed out to standard error or standard output
+		    //MYCP
+                   } else if(strcmp(argvv[0][0], "mycp") == 0){		//if it is mycp, check how many words are sent (e.g. mycp file1 file2 -> num_arg = 3)
 			num_arg = 0;
-			for(int i = 0;argvv[0][i]!=NULL;i++){
+			for(int i = 0; argvv[0][i] != NULL; i++){
 				num_arg++;			
 			}			
-                   	mycp(argvv[0], res, num_arg);				//the result will be copied in global 'res' and the printed out
-			printf("%s\n",res);
-
-                   } else{									//at this point, it must be a simple command, so we create a child process
+                   	mycp(argvv[0], res, num_arg);				//the result will be printed out to standard output
+		    //SIMPLE COMMAND
+                   } else{									//we create a child process
 		 	  son_pid = fork();
 		 	  switch(son_pid){
 		   		case -1: // error
