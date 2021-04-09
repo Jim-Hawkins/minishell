@@ -1,0 +1,13 @@
+ 0 -rw-rw-r-- 1 sergio sergio     0 abr  6 12:41 out.txt
+ 4 drwxrwxr-x 3 sergio sergio  4096 abr  6 12:41 .
+ 4 drwxrwxr-x 4 sergio sergio  4096 abr  5 18:31 ..
+ 4 drwxrwxr-x 8 sergio sergio  4096 abr  4 12:09 .git
+ 4 -rw-rw-r-- 1 sergio sergio    34 abr  3 22:03 README.md
+ 4 -rw-rw-r-- 1 sergio sergio    85 abr  4 10:35 comando
+ 4 -rw-rw-r-- 1 sergio sergio   229 abr  3 22:03 Makefile
+ 8 -rw-rw-r-- 1 sergio sergio  8024 abr  6 12:37 msh.o
+12 -rw-rw-r-- 1 sergio sergio  8379 abr  6 12:37 msh.c
+12 -rwxrwxr-x 1 sergio sergio 12179 abr  3 22:03 probador_ssoo_p2.sh
+20 -rw-rw-r-- 1 sergio sergio 17096 abr  3 22:03 libparser.so
+20 -rwxrwxr-x 1 sergio sergio 18064 abr  6 12:37 msh
+total 96

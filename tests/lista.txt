@@ -1,0 +1,3 @@
+ 0 -rw-rw-r-- 1 sergio sergio     0 abr  8 20:06 lista.txt
+ 4 drwxrwxr-x 3 sergio sergio  4096 abr  8 20:06 .
+ 4 drwxrwxr-x 4 sergio sergio  4096 abr  5 18:31 ..
